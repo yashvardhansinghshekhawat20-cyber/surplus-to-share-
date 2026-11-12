@@ -21,6 +21,7 @@ export interface User {
   availability: string;
   transportation: string;
   created_at: string;
+  token?: string;
 }
 
 export interface RegisterPayload {

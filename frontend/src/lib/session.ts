@@ -1,4 +1,4 @@
-import { apiPost } from "@/lib/api";
+import { apiPost, clearAuthToken } from "@/lib/api";
 import { queryClient } from "@/lib/queryClient";
 
 /** Call after a successful login/register: refetches "me" and every dashboard query. */
@@ -12,6 +12,7 @@ export async function endSession() {
   try {
     await apiPost("/auth/logout");
   } finally {
+    clearAuthToken();
     queryClient.clear();
   }
 }

@@ -42,41 +42,75 @@ CITY_COORDS = {
     "Ahmedabad": [23.0225, 72.5714],
 }
 
+PERSISTENT_USERS_FILE = "/tmp/foodlink_users_persistent.json" if os.name != "nt" else os.path.join(DATA_DIR, "users_backup.json")
+
 def load_db() -> Dict[str, Any]:
+    db = None
     if os.path.exists(DB_FILE):
         try:
             with open(DB_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
+                db = json.load(f)
         except Exception as e:
             print(f"Error loading {DB_FILE}, falling back to seed: {e}")
 
-    if os.path.exists(BACKUP_SEED_FILE):
-        with open(BACKUP_SEED_FILE, "r", encoding="utf-8") as f:
-            seed = json.load(f)
-            collections = seed.get("collections", {})
-            db = {
-                "users": collections.get("users", []),
-                "donations": collections.get("donations", []),
-                "food_requests": collections.get("food_requests", []),
-                "delivery_proofs": collections.get("delivery_proofs", []),
-                "volunteer_tracking": {}
-            }
-            save_db(db)
-            return db
+    if not db and os.path.exists(BACKUP_SEED_FILE):
+        try:
+            with open(BACKUP_SEED_FILE, "r", encoding="utf-8") as f:
+                seed = json.load(f)
+                collections = seed.get("collections", {})
+                db = {
+                    "users": collections.get("users", []),
+                    "donations": collections.get("donations", []),
+                    "food_requests": collections.get("food_requests", []),
+                    "delivery_proofs": collections.get("delivery_proofs", []),
+                    "volunteer_tracking": {},
+                    "email_notifications": [],
+                }
+        except Exception as e:
+            print(f"Error loading seed: {e}")
 
-    default_db = {
-        "users": [],
-        "donations": [],
-        "food_requests": [],
-        "delivery_proofs": [],
-        "volunteer_tracking": {}
-    }
-    save_db(default_db)
-    return default_db
+    if not db:
+        db = {
+            "users": [],
+            "donations": [],
+            "food_requests": [],
+            "delivery_proofs": [],
+            "volunteer_tracking": {},
+            "email_notifications": [],
+        }
+
+    # Automatically restore registered users from persistent backup (survives Git redeploys)
+    if os.path.exists(PERSISTENT_USERS_FILE):
+        try:
+            with open(PERSISTENT_USERS_FILE, "r", encoding="utf-8") as f:
+                saved_users = json.load(f)
+            known_ids = {u["id"] for u in db.get("users", [])}
+            known_emails = {u.get("email", "").lower() for u in db.get("users", [])}
+            for su in saved_users:
+                if su["id"] not in known_ids and su.get("email", "").lower() not in known_emails:
+                    db["users"].append(su)
+                    known_ids.add(su["id"])
+                    known_emails.add(su.get("email", "").lower())
+            print(f"[Storage] Preserved {len(db['users'])} total registered accounts across deploys.")
+        except Exception as e:
+            print(f"[Storage] Note reading user backup: {e}")
+
+    save_db(db)
+    return db
 
 def save_db(db: Dict[str, Any]):
-    with open(DB_FILE, "w", encoding="utf-8") as f:
-        json.dump(db, f, indent=2, default=str)
+    try:
+        with open(DB_FILE, "w", encoding="utf-8") as f:
+            json.dump(db, f, indent=2, default=str)
+    except Exception as e:
+        print(f"Error saving {DB_FILE}: {e}")
+
+    # Also persist all registered users to persistent backup path
+    try:
+        with open(PERSISTENT_USERS_FILE, "w", encoding="utf-8") as f:
+            json.dump(db.get("users", []), f, indent=2, default=str)
+    except Exception as e:
+        print(f"Error saving user backup to {PERSISTENT_USERS_FILE}: {e}")
 
 db = load_db()
 if "email_notifications" not in db:
@@ -128,8 +162,8 @@ def require_current_user(request: Request) -> Dict[str, Any]:
         raise HTTPException(status_code=401, detail="Not authenticated")
     return user
 
-def user_to_public(u: Dict[str, Any]) -> Dict[str, Any]:
-    return {
+def user_to_public(u: Dict[str, Any], token: Optional[str] = None) -> Dict[str, Any]:
+    res = {
         "id": u["id"],
         "name": u["name"],
         "email": u["email"],
@@ -141,6 +175,9 @@ def user_to_public(u: Dict[str, Any]) -> Dict[str, Any]:
         "transportation": u.get("transportation", ""),
         "created_at": str(u.get("created_at", datetime.now(timezone.utc).isoformat())),
     }
+    if token:
+        res["token"] = token
+    return res
 
 def format_food_request(r: Dict[str, Any]) -> Dict[str, Any]:
     # Lookup parent donation
@@ -225,11 +262,12 @@ def register(body: RegisterRequest, response: Response):
         key=COOKIE_NAME,
         value=token,
         httponly=True,
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=30 * 24 * 3600,
         path="/",
     )
-    return user_to_public(new_user)
+    return user_to_public(new_user, token=token)
 
 @app.post("/api/auth/login")
 def login(body: LoginRequest, response: Response):
@@ -259,11 +297,12 @@ def login(body: LoginRequest, response: Response):
         key=COOKIE_NAME,
         value=token,
         httponly=True,
-        samesite="lax",
+        secure=True,
+        samesite="none",
         max_age=30 * 24 * 3600,
         path="/",
     )
-    return user_to_public(user)
+    return user_to_public(user, token=token)
 
 @app.get("/api/auth/me")
 def get_me(user: Dict[str, Any] = Depends(require_current_user)):
