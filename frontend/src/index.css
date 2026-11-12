@@ -1,0 +1,134 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+@import "@fontsource-variable/lora";
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource/ibm-plex-mono";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+    --font-heading: 'Lora Variable', serif;
+    --font-sans: 'Plus Jakarta Sans Variable', sans-serif;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --color-sidebar-ring: var(--sidebar-ring);
+    --color-sidebar-border: var(--sidebar-border);
+    --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+    --color-sidebar-accent: var(--sidebar-accent);
+    --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+    --color-sidebar-primary: var(--sidebar-primary);
+    --color-sidebar-foreground: var(--sidebar-foreground);
+    --color-sidebar: var(--sidebar);
+    --color-chart-5: var(--chart-5);
+    --color-chart-4: var(--chart-4);
+    --color-chart-3: var(--chart-3);
+    --color-chart-2: var(--chart-2);
+    --color-chart-1: var(--chart-1);
+    --color-ring: var(--ring);
+    --color-input: var(--input);
+    --color-border: var(--border);
+    --color-destructive: var(--destructive);
+    --color-accent-foreground: var(--accent-foreground);
+    --color-accent: var(--accent);
+    --color-muted-foreground: var(--muted-foreground);
+    --color-muted: var(--muted);
+    --color-secondary-foreground: var(--secondary-foreground);
+    --color-secondary: var(--secondary);
+    --color-primary-foreground: var(--primary-foreground);
+    --color-primary: var(--primary);
+    --color-popover-foreground: var(--popover-foreground);
+    --color-popover: var(--popover);
+    --color-card-foreground: var(--card-foreground);
+    --color-card: var(--card);
+    --color-foreground: var(--foreground);
+    --color-background: var(--background);
+    --radius-sm: calc(var(--radius) * 0.6);
+    --radius-md: calc(var(--radius) * 0.8);
+    --radius-lg: var(--radius);
+    --radius-xl: calc(var(--radius) * 1.4);
+    --radius-2xl: calc(var(--radius) * 1.8);
+    --radius-3xl: calc(var(--radius) * 2.2);
+    --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Organic & earthy — warm sand page, forest emerald brand, spiced terracotta accent */
+:root {
+    --background: #F8F9F5;
+    --foreground: #14231A;
+    --card: #FFFFFF;
+    --card-foreground: #14231A;
+    --popover: #FFFFFF;
+    --popover-foreground: #14231A;
+    --primary: #1B5E39;
+    --primary-foreground: #F7FBF8;
+    --secondary: #F1F5EE;
+    --secondary-foreground: #14231A;
+    --muted: #F1F5EE;
+    --muted-foreground: #4B5E52;
+    --accent: #C44D25;
+    --accent-foreground: #FFFFFF;
+    --destructive: #B91C1C;
+    --border: #E2E8DE;
+    --input: #E2E8DE;
+    --ring: #1B5E39;
+    --chart-1: #1B5E39;
+    --chart-2: #C44D25;
+    --chart-3: #2E7D4F;
+    --chart-4: #B45309;
+    --chart-5: #112017;
+    --radius: 0.625rem;
+    --sidebar: #F1F5EE;
+    --sidebar-foreground: #14231A;
+    --sidebar-primary: #1B5E39;
+    --sidebar-primary-foreground: #FFFFFF;
+    --sidebar-accent: #E9EFE5;
+    --sidebar-accent-foreground: #14231A;
+    --sidebar-border: #E2E8DE;
+    --sidebar-ring: #1B5E39;
+}
+
+.dark {
+    --background: #0F1B14;
+    --foreground: #F4F7F2;
+    --card: #16261C;
+    --card-foreground: #F4F7F2;
+    --popover: #16261C;
+    --popover-foreground: #F4F7F2;
+    --primary: #68D391;
+    --primary-foreground: #0F1B14;
+    --secondary: #1D3226;
+    --secondary-foreground: #F4F7F2;
+    --muted: #1D3226;
+    --muted-foreground: #96AB9D;
+    --accent: #D9603A;
+    --accent-foreground: #FFFFFF;
+    --destructive: #DC2626;
+    --border: #24382C;
+    --input: #24382C;
+    --ring: #68D391;
+    --chart-1: #68D391;
+    --chart-2: #F1936B;
+    --chart-3: #4ADE80;
+    --chart-4: #FBBF24;
+    --chart-5: #A7F3D0;
+    --sidebar: #16261C;
+    --sidebar-foreground: #F4F7F2;
+    --sidebar-primary: #68D391;
+    --sidebar-primary-foreground: #0F1B14;
+    --sidebar-accent: #1D3226;
+    --sidebar-accent-foreground: #F4F7F2;
+    --sidebar-border: #24382C;
+    --sidebar-ring: #68D391;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+  }
+}
