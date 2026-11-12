@@ -4,7 +4,6 @@ import {
   Utensils, 
   LogOut, 
   PhoneCall, 
-  PlusCircle, 
   MapPin, 
   CheckCircle2, 
   Clock, 
@@ -15,19 +14,16 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { useMe } from "@/hooks/useMe";
-import { HOME_BY_ROLE, ROLE_LABEL, CITIES } from "@/lib/constants";
+import { HOME_BY_ROLE, ROLE_LABEL } from "@/lib/constants";
 import { endSession } from "@/lib/session";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { DonationCreateDialog } from "@/components/donations/DonationCreateDialog";
 
 export default function Navbar() {
   const { data: me } = useMe();
   const navigate = useNavigate();
   const [hotlineOpen, setHotlineOpen] = useState(false);
   const [copied, setCopied] = useState(false);
-  const [createOpen, setCreateOpen] = useState(false);
-  const [selectedCity, setSelectedCity] = useState("Bengaluru");
 
   const onLogout = async () => {
     await endSession();
@@ -67,24 +63,6 @@ export default function Navbar() {
                 </p>
               </div>
             </Link>
-
-            {/* Metro City Hub Selector */}
-            <div className="relative hidden xl:block">
-              <select
-                value={selectedCity}
-                onChange={(e) => {
-                  setSelectedCity(e.target.value);
-                  toast.info(`Switched city filter to ${e.target.value}`);
-                }}
-                className="text-xs font-semibold bg-slate-100 hover:bg-slate-200/80 border border-slate-200 rounded-lg px-2.5 py-1.5 text-slate-700 cursor-pointer transition-colors focus:outline-emerald-500"
-              >
-                {CITIES.map((c) => (
-                  <option key={c} value={c}>
-                    📍 {c} Hub
-                  </option>
-                ))}
-              </select>
-            </div>
           </div>
 
           {/* Navigation Tabs */}
@@ -164,26 +142,6 @@ export default function Navbar() {
               <PhoneCall className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
               <span className="hidden sm:inline">Urgent Hotline</span>
               <span className="text-[11px] font-mono font-bold text-amber-800 hidden lg:inline">+91 98000 91000</span>
-            </button>
-
-            {/* Post Surplus Button */}
-            <button
-              onClick={() => {
-                if (!me) {
-                  toast.info("Please sign in as a Food Donor to post surplus food");
-                  navigate("/login");
-                  return;
-                }
-                if (me.role !== "provider" && me.role !== "admin") {
-                  toast.info("Switch to the 'Food Donor' persona in the top bar to post surplus");
-                  return;
-                }
-                setCreateOpen(true);
-              }}
-              className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-white text-xs sm:text-sm font-bold shadow-md shadow-emerald-600/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
-            >
-              <PlusCircle className="w-4 h-4" />
-              <span>Post Surplus</span>
             </button>
 
             {/* Active User Badge / Auth Links */}
@@ -270,9 +228,6 @@ export default function Navbar() {
           </div>
         </DialogContent>
       </Dialog>
-
-      {/* Post Donation Dialog */}
-      <DonationCreateDialog open={createOpen} onOpenChange={setCreateOpen} />
     </>
   );
 }
