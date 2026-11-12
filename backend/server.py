@@ -75,6 +75,15 @@ db = load_db()
 
 app = FastAPI(title="FoodLink Local API", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
+@app.get("/")
+def root():
+    return {
+        "name": "FoodLink Surplus to Share API",
+        "status": "online",
+        "frontend_website": "https://surplus-to-share.vercel.app",
+        "interactive_docs": "/api/docs",
+    }
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
