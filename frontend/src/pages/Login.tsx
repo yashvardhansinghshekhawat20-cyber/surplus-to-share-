@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { apiPost } from "@/lib/api";
-import { DEMO_ACCOUNTS, HOME_BY_ROLE } from "@/lib/constants";
+import { HOME_BY_ROLE } from "@/lib/constants";
 import { apiErrorMessage } from "@/lib/format";
 import { beginSession } from "@/lib/session";
 import type { User } from "@/types";
@@ -63,25 +63,8 @@ export default function Login() {
           </h1>
           <p className="mt-2 text-sm text-[#475569]">Log in to your FoodLink account.</p>
 
-          <div className="mt-6 flex flex-wrap gap-2">
-            {DEMO_ACCOUNTS.map((d) => (
-              <button
-                key={d.role}
-                type="button"
-                onClick={() => {
-                  setEmail(d.email);
-                  setPassword(d.password);
-                }}
-                className="rounded-full border border-[#e2e8f0] bg-[#f1f5f9] px-3 py-1.5 text-xs font-semibold text-[#047857] transition-colors hover:border-[#047857]/40"
-                data-testid={`demo-fill-${d.role}`}
-              >
-                {d.label}
-              </button>
-            ))}
-          </div>
-
           <form
-            className="mt-6 space-y-4"
+            className="mt-8 space-y-4"
             onSubmit={(e) => {
               e.preventDefault();
               loginMutation.mutate({ email, password });
