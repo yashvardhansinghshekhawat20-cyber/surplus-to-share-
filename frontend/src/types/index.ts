@@ -82,6 +82,7 @@ export interface FoodRequest {
   status: RequestStatus;
   volunteer_id: string | null;
   volunteer_name: string | null;
+  volunteer_phone?: string | null;
   has_proof: boolean;
   thank_you: string;
   created_at: string;
@@ -146,6 +147,7 @@ export interface TrackingInfo {
   request_id: string;
   status: string;
   volunteer_name: string;
+  volunteer_phone?: string | null;
   sharing: boolean;
   lat: number | null;
   lng: number | null;
@@ -168,6 +170,7 @@ export interface RestoreResult {
 export interface VolunteerPin {
   id: string;
   name: string;
+  phone?: string;
   city: string;
   transportation: string;
   availability: string;

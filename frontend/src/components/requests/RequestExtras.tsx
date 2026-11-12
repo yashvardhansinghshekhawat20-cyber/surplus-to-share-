@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { MapContainer, Marker, Popup, TileLayer, useMap } from "react-leaflet";
-import { Heart, Radio } from "lucide-react";
+import { Heart, Radio, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -55,6 +55,22 @@ function TrackingDialog({ request, onClose }: { request: FoodRequest | null; onC
             <span className="text-[#475569]">The volunteer hasn't started live sharing yet. This map refreshes every 10 seconds.</span>
           )}
         </p>
+
+        {(t?.volunteer_name || request?.volunteer_name) && (
+          <div className="flex items-center justify-between gap-3 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+            <div>
+              <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">Assigned Delivery Courier</p>
+              <p className="font-heading text-sm font-bold text-slate-900">{t?.volunteer_name || request?.volunteer_name}</p>
+            </div>
+            <a
+              href={`tel:${t?.volunteer_phone || request?.volunteer_phone || "+919800091000"}`}
+              className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-colors hover:bg-emerald-700 active:scale-95"
+            >
+              <Phone className="h-3.5 w-3.5" />
+              <span>{t?.volunteer_phone || request?.volunteer_phone || "+91 98000 91000"}</span>
+            </a>
+          </div>
+        )}
         <div className="isolate h-72 overflow-hidden rounded-xl border border-[#e2e8f0]">
           {center ? (
             <MapContainer center={center} zoom={14} className="h-full w-full">

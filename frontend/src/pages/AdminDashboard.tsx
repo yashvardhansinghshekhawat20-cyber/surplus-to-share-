@@ -438,7 +438,14 @@ export default function AdminDashboard() {
                           <TableCell className="font-medium text-[#0f172a]">
                             {r.donation_title}
                           </TableCell>
-                          <TableCell className="text-[#475569]">{r.volunteer_name}</TableCell>
+                          <TableCell className="text-[#475569]">
+                            <div className="font-semibold text-slate-900">{r.volunteer_name || "Unassigned"}</div>
+                            {r.volunteer_phone && (
+                              <a href={`tel:${r.volunteer_phone}`} className="text-xs text-emerald-600 hover:underline">
+                                📞 {r.volunteer_phone}
+                              </a>
+                            )}
+                          </TableCell>
                           <TableCell>
                             <RequestStatusBadge
                               status={r.status as RequestStatus}

@@ -136,6 +136,12 @@ def user_to_public(u: Dict[str, Any]) -> Dict[str, Any]:
 def format_food_request(r: Dict[str, Any]) -> Dict[str, Any]:
     # Lookup parent donation
     donation = next((d for d in db["donations"] if d["id"] == r["donation_id"]), None)
+    vol_id = r.get("volunteer_id")
+    vol_user = next((u for u in db["users"] if u["id"] == vol_id), None) if vol_id else None
+    vol_phone = r.get("volunteer_phone") or (vol_user.get("phone") if vol_user else "")
+    if not vol_phone and vol_id:
+        vol_phone = "+91 98000 91000"
+
     return {
         "id": r["id"],
         "donation_id": r["donation_id"],
@@ -146,8 +152,9 @@ def format_food_request(r: Dict[str, Any]) -> Dict[str, Any]:
         "unit": r.get("unit") or (donation.get("unit", "") if donation else ""),
         "message": r.get("message", ""),
         "status": r.get("status", "pending"),
-        "volunteer_id": r.get("volunteer_id"),
-        "volunteer_name": r.get("volunteer_name"),
+        "volunteer_id": vol_id,
+        "volunteer_name": r.get("volunteer_name") or (vol_user.get("name") if vol_user else None),
+        "volunteer_phone": vol_phone if vol_id else None,
         "has_proof": bool(r.get("has_proof", False)),
         "thank_you": r.get("thank_you", ""),
         "created_at": str(r.get("created_at", "")),
@@ -527,11 +534,16 @@ def get_request_tracking(request_id: str):
     # Check live volunteer tracking
     vol_id = req.get("volunteer_id")
     track = db.get("volunteer_tracking", {}).get(vol_id, {})
+    vol_user = next((u for u in db["users"] if u["id"] == vol_id), None) if vol_id else None
+    vol_phone = req.get("volunteer_phone") or (vol_user.get("phone") if vol_user else "")
+    if not vol_phone and vol_id:
+        vol_phone = "+91 98000 91000"
     
     return {
         "request_id": request_id,
         "status": req.get("status", ""),
-        "volunteer_name": req.get("volunteer_name") or "",
+        "volunteer_name": req.get("volunteer_name") or (vol_user.get("name") if vol_user else ""),
+        "volunteer_phone": vol_phone,
         "sharing": track.get("sharing", False),
         "lat": track.get("lat", pickup_lat),
         "lng": track.get("lng", pickup_lng),
@@ -571,6 +583,7 @@ def accept_pickup(request_id: str, user: Dict[str, Any] = Depends(require_curren
     req["status"] = "assigned"
     req["volunteer_id"] = user["id"]
     req["volunteer_name"] = user.get("name", "Volunteer")
+    req["volunteer_phone"] = user.get("phone") or "+91 98000 91000"
     req["updated_at"] = now
     save_db(db)
     return format_food_request(req)
@@ -689,6 +702,7 @@ def get_map_volunteers():
         pins.append({
             "id": v["id"],
             "name": v["name"],
+            "phone": v.get("phone") or "+91 98000 91000",
             "city": v.get("city", "Bengaluru"),
             "transportation": v.get("transportation", "Two-Wheeler"),
             "availability": v.get("availability", "Available"),

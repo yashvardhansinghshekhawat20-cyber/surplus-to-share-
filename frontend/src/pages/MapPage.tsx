@@ -283,6 +283,14 @@ export default function MapPage() {
                         <p className="text-xs font-semibold text-emerald-700 pt-1 border-t border-slate-100">
                           {v.active_deliveries > 0 ? `${v.active_deliveries} delivery in progress` : "Ready for immediate pickup"}
                         </p>
+                        <div className="pt-2 mt-1 border-t border-slate-100">
+                          <a
+                            href={`tel:${v.phone || "+919800091000"}`}
+                            className="w-full inline-flex items-center justify-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-xs transition-colors"
+                          >
+                            <span>📞 Call {v.phone || "+91 98000 91000"}</span>
+                          </a>
+                        </div>
                       </div>
                     </Popup>
                   </Marker>

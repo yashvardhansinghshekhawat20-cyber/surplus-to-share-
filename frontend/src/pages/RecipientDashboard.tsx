@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
-import { Search } from "lucide-react";
+import { Search, Phone } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { ProofPhoto } from "@/components/status/ProofPhoto";
@@ -110,10 +110,27 @@ export default function RecipientDashboard() {
                   {r.has_proof && <ProofPhoto requestId={r.id} />}
                   <RequestExtras r={r} />
                   {r.volunteer_name && (
-                    <p className="text-sm text-[#475569]">
-                      Volunteer:{" "}
-                      <span className="font-semibold text-[#0f172a]">{r.volunteer_name}</span>
-                    </p>
+                    <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-emerald-200 bg-emerald-50/70 p-3">
+                      <div className="flex items-center gap-2.5">
+                        <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-600 font-bold text-white shadow-xs">
+                          {r.volunteer_name.charAt(0)}
+                        </div>
+                        <div>
+                          <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-800">
+                            Assigned Courier
+                          </p>
+                          <p className="font-heading text-sm font-bold text-slate-900">{r.volunteer_name}</p>
+                        </div>
+                      </div>
+                      <a
+                        href={`tel:${r.volunteer_phone || "+919800091000"}`}
+                        className="flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-bold text-white shadow-xs transition-all hover:bg-emerald-700 active:scale-95"
+                        title="Call courier directly"
+                      >
+                        <Phone className="h-3.5 w-3.5" />
+                        <span>{r.volunteer_phone || "+91 98000 91000"}</span>
+                      </a>
+                    </div>
                   )}
                   <p className="text-xs text-stone-400">
                     Requested {fmtDateTime(r.created_at)} · Last update {fmtDateTime(r.updated_at)}
