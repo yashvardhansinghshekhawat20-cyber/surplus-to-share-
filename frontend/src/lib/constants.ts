@@ -15,6 +15,7 @@ export const CITIES = [
   "Bengaluru",
   "Mumbai",
   "Delhi NCR",
+  "Jaipur",
   "Hyderabad",
   "Chennai",
   "Pune",

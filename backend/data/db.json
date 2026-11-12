@@ -195,6 +195,26 @@
       "lat": 28.6289,
       "lng": 77.239,
       "location_approximate": true
+    },
+    {
+      "id": "jaipur-banquet-surplus-001",
+      "provider_id": "admin-master-foodlink-001",
+      "provider_name": "Rajmahal Palace Banquets",
+      "provider_organization": "Rajmahal Palace Banquets",
+      "title": "Royal Wedding Feast \u2014 Dal Baati Churma & Gatta Curry Platters",
+      "category": "Cooked Meals",
+      "quantity": 150.0,
+      "unit": "meals",
+      "city": "Jaipur",
+      "pickup_location": "Rajmahal Palace, Sardar Patel Marg, C-Scheme, Jaipur",
+      "pickup_contact": "+91 98000 91000",
+      "expiry_date": "2026-11-18",
+      "description": "Untouched fresh banquet surplus from an afternoon wedding reception. Packaged in sanitized insulated hot boxes.",
+      "status": "available",
+      "created_at": "2026-11-12T14:20:00.000000",
+      "lat": 26.9038,
+      "lng": 75.7984,
+      "location_approximate": true
     }
   ],
   "food_requests": [

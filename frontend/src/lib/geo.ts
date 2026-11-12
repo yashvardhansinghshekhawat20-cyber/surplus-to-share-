@@ -3,6 +3,7 @@ export const CITY_COORDS: Record<string, [number, number]> = {
   Bengaluru: [12.9716, 77.5946],
   Mumbai: [19.076, 72.8777],
   "Delhi NCR": [28.6139, 77.209],
+  Jaipur: [26.9124, 75.7873],
   Hyderabad: [17.385, 78.4867],
   Chennai: [13.0827, 80.2707],
   Pune: [18.5204, 73.8567],
