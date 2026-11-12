@@ -382,6 +382,17 @@ class DonationCreatePayload(BaseModel):
     lat: Optional[float] = None
     lng: Optional[float] = None
 
+def ensure_donation_coords(d: Dict[str, Any]) -> Dict[str, Any]:
+    lat = d.get("lat")
+    lng = d.get("lng")
+    if lat is None or lng is None:
+        city = d.get("city", "Bengaluru")
+        coords = CITY_COORDS.get(city, [12.9716, 77.5946])
+        d["lat"] = coords[0]
+        d["lng"] = coords[1]
+        d["location_approximate"] = True
+    return d
+
 @app.get("/api/donations")
 def get_donations(
     status: Optional[str] = None,
@@ -389,7 +400,7 @@ def get_donations(
     category: Optional[str] = None,
     q: Optional[str] = None
 ):
-    results = db["donations"]
+    results = [ensure_donation_coords(d) for d in db["donations"]]
     if status:
         results = [d for d in results if d.get("status") == status]
     if city:

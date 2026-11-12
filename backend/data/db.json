@@ -134,7 +134,10 @@
       "expiry_date": "2026-11-11",
       "description": "Freshly prepared wedding banquet surplus, hot boxes available. Both veg and non-veg counters.",
       "status": "completed",
-      "created_at": "2026-11-10T11:38:44.898000"
+      "created_at": "2026-11-10T11:38:44.898000",
+      "lat": 12.9416,
+      "lng": 77.5646,
+      "location_approximate": true
     },
     {
       "id": "4d11a79f-608d-42c5-9157-aa025b440d78",
@@ -151,7 +154,10 @@
       "expiry_date": "2026-11-12",
       "description": "Crates of mixed vegetables and leafy greens from a cancelled buffet order. Refrigerated storage.",
       "status": "completed",
-      "created_at": "2026-11-10T02:02:44.898000"
+      "created_at": "2026-11-10T02:02:44.898000",
+      "lat": 19.061,
+      "lng": 72.8927,
+      "location_approximate": true
     },
     {
       "id": "631c8d71-38e6-4cde-b037-2a55003aa926",
@@ -168,7 +174,10 @@
       "expiry_date": "2026-11-10",
       "description": "Day-fresh bakery items from our morning counter. Must be picked up today.",
       "status": "completed",
-      "created_at": "2026-11-09T18:50:44.899000"
+      "created_at": "2026-11-09T18:50:44.899000",
+      "lat": 12.9716,
+      "lng": 77.5796,
+      "location_approximate": true
     },
     {
       "id": "20336cef-ad8c-4564-a8d1-6d33db1422df",
@@ -185,7 +194,10 @@
       "expiry_date": "2026-11-13",
       "description": "Seasonal mixed fruit crates, minor cosmetic bruising only. Perfect for community kitchens.",
       "status": "completed",
-      "created_at": "2026-11-09T09:14:44.899000"
+      "created_at": "2026-11-09T09:14:44.899000",
+      "lat": 17.4,
+      "lng": 78.5167,
+      "location_approximate": true
     },
     {
       "id": "ba645c1a-9021-4013-ad05-45ad289995ad",
@@ -202,7 +214,10 @@
       "expiry_date": "2026-11-15",
       "description": "Sealed 5-kg rice and dal kits from an over-produced relief batch. Room temperature storage.",
       "status": "available",
-      "created_at": "2026-11-08T23:38:44.899000"
+      "created_at": "2026-11-08T23:38:44.899000",
+      "lat": 28.6439,
+      "lng": 77.209,
+      "location_approximate": true
     },
     {
       "id": "3d9ba810-8862-4746-bc88-d8ec724bcd7a",
@@ -219,7 +234,10 @@
       "expiry_date": "2026-11-10",
       "description": "Fresh paneer and curd trays. Cold chain pickup required.",
       "status": "available",
-      "created_at": "2026-11-08T14:02:44.899000"
+      "created_at": "2026-11-08T14:02:44.899000",
+      "lat": 19.046,
+      "lng": 72.8477,
+      "location_approximate": true
     },
     {
       "id": "8061a61d-b7b5-436f-a5f3-142627cfca13",
@@ -236,7 +254,10 @@
       "expiry_date": "2026-11-11",
       "description": "Sealed festival sweet packs from a post-event surplus. Dry, room-temperature storage.",
       "status": "available",
-      "created_at": "2026-11-08T04:26:44.900000"
+      "created_at": "2026-11-08T04:26:44.900000",
+      "lat": 17.37,
+      "lng": 78.5017,
+      "location_approximate": true
     },
     {
       "id": "b429aebf-77fe-46c2-84de-6232a9d43129",
@@ -253,7 +274,10 @@
       "expiry_date": "2026-11-10",
       "description": "Unserved corporate lunch thalis. Handover completed to Asha Deep Children's Home.",
       "status": "completed",
-      "created_at": "2026-11-07T14:02:44.900000"
+      "created_at": "2026-11-07T14:02:44.900000",
+      "lat": 12.9716,
+      "lng": 77.5796,
+      "location_approximate": true
     },
     {
       "id": "d59e3f63-f20f-42ec-bb61-666eb8f97219",
@@ -271,9 +295,9 @@
       "description": "",
       "status": "available",
       "created_at": "2026-11-12T08:07:06.492000",
-      "lat": null,
-      "lng": null,
-      "location_approximate": false
+      "lat": 28.6289,
+      "lng": 77.239,
+      "location_approximate": true
     }
   ],
   "food_requests": [

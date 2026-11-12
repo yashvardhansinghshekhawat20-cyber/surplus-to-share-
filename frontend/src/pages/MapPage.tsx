@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import { MapContainer, Marker, Popup, TileLayer } from "react-leaflet";
 import type { Map as LeafletMap } from "leaflet";
-import { LocateFixed, Navigation } from "lucide-react";
+import { LocateFixed, Navigation, RefreshCw, Layers } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,14 +23,29 @@ import {
   urgentFoodIcon,
   volunteerIcon,
 } from "@/components/map/leaflet";
+import "leaflet/dist/leaflet.css";
 import { useMe } from "@/hooks/useMe";
 import { apiGet } from "@/lib/api";
 import { CITIES } from "@/lib/constants";
 import { expiryInfo, fmtQty } from "@/lib/format";
-import { cityCenter, directionsUrl, getBrowserLocation, INDIA_CENTER } from "@/lib/geo";
+import { cityCenter, directionsUrl, getBrowserLocation, INDIA_CENTER, CITY_COORDS } from "@/lib/geo";
 import type { Donation, VolunteerPin } from "@/types";
 
 const ALL = "all";
+
+// Robust coordinate resolver to prevent any Leaflet NaN/null crashes
+function getSafeCoords(lat: any, lng: any, fallbackCity: string, index = 0): [number, number] {
+  const nLat = Number(lat);
+  const nLng = Number(lng);
+  if (Number.isFinite(nLat) && Number.isFinite(nLng) && nLat !== 0 && nLng !== 0) {
+    return [nLat, nLng];
+  }
+  const base = CITY_COORDS[fallbackCity] || INDIA_CENTER;
+  // Apply a deterministic small offset so pins in the same city don't stack directly on top of each other
+  const jitterLat = ((index % 5) - 2) * 0.012;
+  const jitterLng = (((index * 3) % 5) - 2) * 0.012;
+  return [Number((base[0] + jitterLat).toFixed(6)), Number((base[1] + jitterLng).toFixed(6))];
+}
 
 export default function MapPage() {
   const { data: me } = useMe();
@@ -45,10 +60,10 @@ export default function MapPage() {
     queryKey: ["donations", "map"],
     queryFn: () => apiGet<Donation[]>("/donations?status=available"),
   });
+
   const volunteersQuery = useQuery({
     queryKey: ["map-volunteers"],
     queryFn: () => apiGet<VolunteerPin[]>("/map/volunteers"),
-    enabled: !!me,
   });
 
   const food = useMemo(
@@ -58,6 +73,7 @@ export default function MapPage() {
         .sort((a, b) => a.expiry_date.localeCompare(b.expiry_date)),
     [foodQuery.data, city],
   );
+
   const volunteers = useMemo(
     () => (volunteersQuery.data ?? []).filter((v) => city === ALL || v.city === city),
     [volunteersQuery.data, city],
@@ -75,106 +91,157 @@ export default function MapPage() {
       const p = await getBrowserLocation();
       setMyPos(p);
       map?.flyTo([p.lat, p.lng], 13);
+      toast.success("Found your location!");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Could not get your location");
     }
   };
 
   return (
-    <div className="mx-auto max-w-7xl px-4 py-10 sm:px-6">
+    <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6">
+      {/* Header */}
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div className="max-w-2xl">
-          <p className="font-mono text-xs font-semibold uppercase tracking-[0.18em] text-[#d97706]">
-            Live rescue map
-          </p>
-          <h1 className="mt-1 font-heading text-3xl font-semibold tracking-tight text-[#0f172a]">
-            Where food is waiting — and who can move it
+          <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-bold uppercase tracking-wider mb-2">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            Live Hyperlocal Rescue Map
+          </div>
+          <h1 className="font-heading text-3xl font-extrabold tracking-tight text-slate-900">
+            Real-Time Food Rescue &amp; Courier Map
           </h1>
-          <p className="mt-2 text-sm leading-relaxed text-[#475569]">
-            Orange pins are surplus food ready for pickup, green dots are volunteers. Tap any pin
-            for details and one-tap directions.
+          <p className="mt-1 text-sm text-slate-600">
+            Amber teardrops indicate fresh surplus ready for pickup; emerald dots represent verified couriers.
           </p>
         </div>
+
+        {/* City Filter & Location Trigger */}
         <div className="flex flex-wrap items-center gap-2">
           <Select value={city} onValueChange={goToCity}>
-            <SelectTrigger className="w-44" data-testid="map-city-select">
-              <SelectValue>{(v) => (v === ALL ? "All of India" : (v as string))}</SelectValue>
+            <SelectTrigger className="w-48 bg-white" data-testid="map-city-select">
+              <SelectValue>{city === ALL ? "All of India" : city}</SelectValue>
             </SelectTrigger>
             <SelectContent>
               <SelectItem value={ALL}>All of India</SelectItem>
               {CITIES.map((c) => (
                 <SelectItem key={c} value={c}>
-                  {c}
+                  📍 {c}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
-          <Button variant="outline" onClick={nearMe} data-testid="btn-map-near-me">
-            <LocateFixed className="h-4 w-4" /> Near me
+
+          <Button variant="outline" onClick={nearMe} className="bg-white gap-1.5" data-testid="btn-map-near-me">
+            <LocateFixed className="h-4 w-4 text-emerald-600" /> Near me
+          </Button>
+
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              foodQuery.refetch();
+              volunteersQuery.refetch();
+              toast.info("Refreshed live map pins");
+            }}
+            title="Refresh map data"
+          >
+            <RefreshCw className="h-4 w-4 text-slate-500" />
           </Button>
         </div>
       </div>
 
-      <div className="mt-6 flex flex-wrap items-center gap-5 rounded-2xl border border-[#e2e8f0] bg-white px-4 py-3 text-sm">
-        <label className="flex items-center gap-2 font-medium text-[#0f172a]">
-          <Checkbox
-            checked={showFood}
-            onCheckedChange={(v) => setShowFood(!!v)}
-            data-testid="map-toggle-food"
-          />
-          <span className="inline-block h-3 w-3 rounded-full bg-[#d97706]" />
-          Surplus food <span className="font-mono text-[#475569]" data-testid="map-food-count">({food.length})</span>
-        </label>
-        <label className="flex items-center gap-2 font-medium text-[#0f172a]">
-          <Checkbox
-            checked={showVolunteers}
-            onCheckedChange={(v) => setShowVolunteers(!!v)}
-            disabled={!me}
-            data-testid="map-toggle-volunteers"
-          />
-          <span className="inline-block h-3 w-3 rounded-full bg-[#047857]" />
-          Volunteers{" "}
-          {me ? (
-            <span className="font-mono text-[#475569]" data-testid="map-volunteer-count">({volunteers.length})</span>
-          ) : (
-            <Link to="/login" className="text-xs font-semibold text-[#059669] hover:underline" data-testid="map-login-for-volunteers">
-              log in to see
-            </Link>
-          )}
-        </label>
-        <span className="flex items-center gap-2 text-xs text-[#475569]">
-          <span className="inline-block h-3 w-3 rounded-full bg-[#B91C1C]" /> Expires today
-        </span>
+      {/* Control Layer Filters */}
+      <div className="mt-6 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-slate-200 bg-white px-5 py-3.5 text-xs shadow-xs">
+        <div className="flex flex-wrap items-center gap-6">
+          <label className="flex items-center gap-2 font-bold text-slate-800 cursor-pointer">
+            <Checkbox
+              checked={showFood}
+              onCheckedChange={(v) => setShowFood(!!v)}
+              data-testid="map-toggle-food"
+            />
+            <span className="inline-block h-3 w-3 rounded-full bg-amber-500 shadow-xs" />
+            Surplus Food Listings{" "}
+            <span className="font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              {food.length}
+            </span>
+          </label>
+
+          <label className="flex items-center gap-2 font-bold text-slate-800 cursor-pointer">
+            <Checkbox
+              checked={showVolunteers}
+              onCheckedChange={(v) => setShowVolunteers(!!v)}
+              data-testid="map-toggle-volunteers"
+            />
+            <span className="inline-block h-3 w-3 rounded-full bg-emerald-600 shadow-xs" />
+            Active Couriers{" "}
+            <span className="font-mono text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              {volunteers.length}
+            </span>
+          </label>
+        </div>
+
+        <div className="flex items-center gap-3 text-slate-500">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-red-600 animate-pulse" />
+            High Urgency (&lt; 2h)
+          </span>
+          <span className="flex items-center gap-1.5">
+            <Layers className="h-3.5 w-3.5 text-slate-400" />
+            OpenStreetMap Tiles
+          </span>
+        </div>
       </div>
 
-      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_340px]">
-        <div className="isolate h-[68svh] min-h-[420px] overflow-hidden rounded-2xl border border-[#e2e8f0] shadow-sm" data-testid="rescue-map">
-          <MapContainer ref={setMap} center={INDIA_CENTER} zoom={5} className="h-full w-full" scrollWheelZoom>
+      {/* Map & Food Sidebar */}
+      <div className="mt-4 grid gap-4 lg:grid-cols-[1fr_360px]">
+        {/* Leaflet Canvas */}
+        <div
+          className="isolate h-[70vh] min-h-[460px] w-full overflow-hidden rounded-2xl border border-slate-200 shadow-sm relative bg-slate-100"
+          data-testid="rescue-map"
+        >
+          <MapContainer
+            ref={setMap}
+            center={city === ALL ? INDIA_CENTER : cityCenter(city)}
+            zoom={city === ALL ? 5 : 12}
+            className="h-full w-full"
+            style={{ height: "100%", minHeight: "460px", width: "100%" }}
+            scrollWheelZoom
+          >
             <TileLayer url={OSM_TILES} attribution={OSM_ATTRIBUTION} />
+
+            {/* Food Markers */}
             {showFood &&
-              food.map((d) => {
+              food.map((d, index) => {
+                const coords = getSafeCoords(d.lat, d.lng, d.city, index);
                 const exp = expiryInfo(d.expiry_date);
                 return (
                   <Marker
                     key={d.id}
-                    position={[d.lat, d.lng]}
+                    position={coords}
                     icon={exp.urgency === "danger" ? urgentFoodIcon : foodIcon}
                   >
                     <Popup>
-                      <div className="min-w-[200px] space-y-1 font-sans" data-testid={`map-food-popup-${d.id}`}>
-                        <p className="font-heading text-sm font-semibold text-[#0f172a]">{d.title}</p>
-                        <p className="text-xs text-[#475569]">{d.provider_name} · {d.city}</p>
-                        <p className="font-mono text-xs font-semibold text-[#0f172a]">{fmtQty(d.quantity, d.unit)}</p>
-                        <p className="text-xs text-[#475569]">{exp.label}</p>
-                        {d.location_approximate && (
-                          <p className="text-[11px] italic text-stone-400">Approximate area — see address</p>
-                        )}
-                        <div className="flex gap-2 pt-1">
+                      <div className="min-w-[220px] p-1 space-y-1.5 font-sans" data-testid={`map-food-popup-${d.id}`}>
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[10px] uppercase font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            {d.category}
+                          </span>
+                          <span className="text-[10px] font-semibold text-amber-700">{exp.label}</span>
+                        </div>
+
+                        <h4 className="font-heading text-sm font-bold text-slate-900 leading-snug">{d.title}</h4>
+                        <p className="text-xs text-slate-500">{d.provider_name} &bull; {d.city}</p>
+                        
+                        <div className="flex items-center justify-between text-xs pt-1 border-t border-slate-100">
+                          <span className="font-mono font-bold text-emerald-800">{fmtQty(d.quantity, d.unit)}</span>
+                          <span className="text-slate-400 text-[11px]">{d.pickup_location}</span>
+                        </div>
+
+                        <div className="flex gap-2 pt-2">
                           <a
-                            href={directionsUrl(d.lat, d.lng)}
+                            href={directionsUrl(coords[0], coords[1])}
                             target="_blank"
                             rel="noreferrer"
-                            className="inline-flex items-center gap-1 rounded-md bg-[#047857] px-2 py-1 text-xs font-semibold !text-white"
+                            className="flex-1 inline-flex items-center justify-center gap-1 rounded-lg bg-emerald-700 px-2 py-1.5 text-xs font-bold text-white hover:bg-emerald-800 transition-colors"
                             data-testid={`map-directions-${d.id}`}
                           >
                             <Navigation className="h-3 w-3" /> Directions
@@ -182,10 +249,10 @@ export default function MapPage() {
                           <button
                             type="button"
                             onClick={() => setSelected(d)}
-                            className="rounded-md border border-[#cbd5e1] px-2 py-1 text-xs font-semibold text-[#047857]"
+                            className="flex-1 rounded-lg border border-slate-200 bg-slate-50 px-2 py-1.5 text-xs font-bold text-slate-700 hover:bg-slate-100 transition-colors"
                             data-testid={`map-details-${d.id}`}
                           >
-                            Details
+                            Claim / Details
                           </button>
                         </div>
                       </div>
@@ -193,66 +260,92 @@ export default function MapPage() {
                   </Marker>
                 );
               })}
-            {me &&
-              showVolunteers &&
-              volunteers.map((v) => (
-                <Marker key={v.id} position={[v.lat, v.lng]} icon={volunteerIcon}>
-                  <Popup>
-                    <div className="min-w-[180px] space-y-1 font-sans" data-testid={`map-volunteer-popup-${v.id}`}>
-                      <p className="text-sm font-semibold text-[#0f172a]">{v.name}</p>
-                      <p className="text-xs text-[#475569]">
-                        {v.transportation || "Transport not set"} · {v.city}
-                      </p>
-                      <p className="text-xs text-[#475569]">{v.availability || "Availability not set"}</p>
-                      <p className="text-xs font-medium text-[#047857]">
-                        {v.active_deliveries > 0 ? `${v.active_deliveries} delivery in progress` : "Free for pickups"}
-                      </p>
-                      {v.approximate && (
-                        <p className="text-[11px] italic text-stone-400">Approximate area</p>
-                      )}
-                    </div>
-                  </Popup>
-                </Marker>
-              ))}
+
+            {/* Volunteer Courier Markers */}
+            {showVolunteers &&
+              volunteers.map((v, index) => {
+                const coords = getSafeCoords(v.lat, v.lng, v.city, index + 10);
+                return (
+                  <Marker key={v.id} position={coords} icon={volunteerIcon}>
+                    <Popup>
+                      <div className="min-w-[190px] p-1 space-y-1 font-sans" data-testid={`map-volunteer-popup-${v.id}`}>
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-[10px] uppercase font-bold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                            Volunteer Courier
+                          </span>
+                          <span className="text-[10px] font-semibold text-emerald-600">Active</span>
+                        </div>
+                        <p className="text-sm font-bold text-slate-900">{v.name}</p>
+                        <p className="text-xs text-slate-500">
+                          {v.transportation || "Two-Wheeler"} &bull; {v.city}
+                        </p>
+                        <p className="text-xs text-slate-500">{v.availability || "Available for missions"}</p>
+                        <p className="text-xs font-semibold text-emerald-700 pt-1 border-t border-slate-100">
+                          {v.active_deliveries > 0 ? `${v.active_deliveries} delivery in progress` : "Ready for immediate pickup"}
+                        </p>
+                      </div>
+                    </Popup>
+                  </Marker>
+                );
+              })}
+
+            {/* Current User Browser Location */}
             {myPos && (
               <Marker position={[myPos.lat, myPos.lng]} icon={meIcon}>
-                <Popup>You are here</Popup>
+                <Popup>
+                  <p className="font-bold text-xs">Your Current Location</p>
+                </Popup>
               </Marker>
             )}
           </MapContainer>
         </div>
 
-        <aside className="flex max-h-[68svh] min-h-[420px] flex-col rounded-2xl border border-[#e2e8f0] bg-white">
-          <div className="border-b border-[#e2e8f0] px-4 py-3">
-            <h2 className="font-heading text-base font-semibold text-[#0f172a]">Food on the map</h2>
-            <p className="text-xs text-[#475569]">Soonest expiry first — tap to zoom in</p>
+        {/* Sidebar Listings List */}
+        <aside className="flex max-h-[70vh] min-h-[460px] flex-col rounded-2xl border border-slate-200 bg-white shadow-xs">
+          <div className="border-b border-slate-100 px-4 py-3 bg-slate-50/60 rounded-t-2xl">
+            <h3 className="font-heading text-sm font-bold text-slate-900">Available Surplus Pins</h3>
+            <p className="text-xs text-slate-500">Sorted by soonest expiry &bull; tap to fly</p>
           </div>
+
           <div className="flex-1 space-y-2 overflow-y-auto p-3" data-testid="map-food-list">
             {foodQuery.isError ? (
-              <p className="p-3 text-sm text-[#475569]">Live listings are offline right now.</p>
+              <p className="p-3 text-xs text-slate-500">Live listings are offline right now.</p>
             ) : foodQuery.isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <div key={i} className="h-16 animate-pulse rounded-xl bg-stone-200" />
+                <div key={i} className="h-16 animate-pulse rounded-xl bg-slate-100" />
               ))
             ) : food.length === 0 ? (
-              <p className="p-3 text-sm text-[#475569]">No surplus food listed here right now.</p>
+              <div className="p-6 text-center text-xs text-slate-500">
+                No surplus food available in {city === ALL ? "the network" : city} right now.
+              </div>
             ) : (
-              food.map((d) => {
+              food.map((d, index) => {
+                const coords = getSafeCoords(d.lat, d.lng, d.city, index);
                 const exp = expiryInfo(d.expiry_date);
                 return (
                   <button
                     key={d.id}
                     type="button"
-                    onClick={() => map?.flyTo([d.lat, d.lng], 15)}
-                    className="w-full rounded-xl border border-[#e2e8f0] p-3 text-left transition-colors hover:border-[#047857]/40 hover:bg-[#f8fafc]"
+                    onClick={() => {
+                      if (map) {
+                        map.flyTo(coords, 14, { duration: 1.2 });
+                      }
+                    }}
+                    className="w-full rounded-xl border border-slate-200 p-3 text-left transition-all hover:border-emerald-500 hover:bg-emerald-50/20 group"
                     data-testid={`map-list-item-${d.id}`}
                   >
-                    <p className="text-sm font-semibold text-[#0f172a]">{d.title}</p>
-                    <p className="mt-0.5 text-xs text-[#475569]">
-                      {fmtQty(d.quantity, d.unit)} · {d.city} ·{" "}
-                      <span className={exp.urgency === "danger" ? "font-semibold text-[#B91C1C]" : ""}>
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <span className="text-[10px] font-bold text-slate-500 uppercase">{d.category}</span>
+                      <span className={`text-[10px] font-bold ${exp.urgency === "danger" ? "text-red-600 font-extrabold" : "text-amber-700"}`}>
                         {exp.label}
                       </span>
+                    </div>
+                    <p className="text-xs font-bold text-slate-900 group-hover:text-emerald-700 transition-colors line-clamp-1">
+                      {d.title}
+                    </p>
+                    <p className="mt-1 text-[11px] text-slate-500 flex items-center justify-between">
+                      <span className="font-mono font-semibold text-emerald-800">{fmtQty(d.quantity, d.unit)}</span>
+                      <span>📍 {d.city}</span>
                     </p>
                   </button>
                 );
