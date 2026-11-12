@@ -3,7 +3,6 @@ import type { ReactNode } from "react";
 import { Toaster } from "@/components/ui/sonner";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
-import { RoleSwitcherBar } from "@/components/layout/RoleSwitcherBar";
 import { useMe } from "@/hooks/useMe";
 import { HOME_BY_ROLE } from "@/lib/constants";
 import AdminDashboard from "@/pages/AdminDashboard";
@@ -36,7 +35,6 @@ function RequireRole({ role, children }: { role: Role; children: ReactNode }) {
 export default function App() {
   return (
     <div className="flex min-h-svh flex-col bg-slate-50 text-slate-900">
-      <RoleSwitcherBar />
       <Navbar />
       <main className="flex-1">
         <Routes>

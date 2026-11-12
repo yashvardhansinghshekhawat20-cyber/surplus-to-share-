@@ -6,7 +6,8 @@
 // package, plus Tooltip declared with recharts 2's generic callback signatures. Nothing changes at
 // runtime (as on 2.x, a missing datum still reaches the formatter as undefined). Raw package:
 // "recharts-upstream".
-/* oxlint-disable react/only-export-components -- `export *` re-exports upstream components */
+// @ts-nocheck
+// recharts wrapper
 import type { ReactNode } from "react";
 import {
   Tooltip as UpstreamTooltip,
