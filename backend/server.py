@@ -13,6 +13,12 @@ from passlib.hash import pbkdf2_sha256
 from pydantic import BaseModel
 import pandas as pd
 
+from notifications import (
+    notify_nearby_ngos_new_surplus,
+    notify_volunteers_ngo_requested,
+    notify_admin_food_delivered,
+)
+
 JWT_SECRET = "foodlink-super-secret-local-jwt-key"
 JWT_ALGORITHM = "HS256"
 COOKIE_NAME = "foodlink_session"
@@ -73,6 +79,8 @@ def save_db(db: Dict[str, Any]):
         json.dump(db, f, indent=2, default=str)
 
 db = load_db()
+if "email_notifications" not in db:
+    db["email_notifications"] = []
 
 app = FastAPI(title="FoodLink Local API", docs_url="/api/docs", openapi_url="/api/openapi.json")
 
@@ -473,6 +481,13 @@ def create_donation(body: DonationCreatePayload, user: Dict[str, Any] = Depends(
     }
     db["donations"].insert(0, new_donation)
     save_db(db)
+
+    # 1. Trigger automated email to all nearby recipient NGOs
+    try:
+        notify_nearby_ngos_new_surplus(new_donation, db.get("users", []), db, save_db)
+    except Exception as e:
+        print(f"Notification error on create_donation: {e}")
+
     return new_donation
 
 # ==================== REQUESTS ENDPOINTS ====================
@@ -509,6 +524,13 @@ def create_food_request(body: RequestCreatePayload, user: Dict[str, Any] = Depen
     }
     db["food_requests"].insert(0, new_req)
     save_db(db)
+
+    # 2. Trigger automated email to all nearby volunteer couriers
+    try:
+        notify_volunteers_ngo_requested(new_req, donation, db.get("users", []), db, save_db)
+    except Exception as e:
+        print(f"Notification error on create_food_request: {e}")
+
     return format_food_request(new_req)
 
 @app.get("/api/requests/mine")
@@ -629,6 +651,11 @@ def update_delivery_status(delivery_id: str, body: DeliveryStatusPayload, user: 
         donation = next((d for d in db["donations"] if d["id"] == req["donation_id"]), None)
         if donation:
             donation["status"] = "completed"
+        # 3. Trigger automated email to admin when food is delivered
+        try:
+            notify_admin_food_delivered(req, donation or {}, db.get("users", []), db, save_db)
+        except Exception as e:
+            print(f"Notification error on delivery: {e}")
 
     save_db(db)
     return format_food_request(req)
@@ -782,11 +809,25 @@ def admin_action_request(request_id: str, action: str, admin: Dict[str, Any] = D
     elif action == "reject":
         req["status"] = "rejected"
         req["updated_at"] = now
+    elif action == "deliver":
+        req["status"] = "delivered"
+        req["updated_at"] = now
+        donation = next((d for d in db["donations"] if d["id"] == req["donation_id"]), None)
+        if donation:
+            donation["status"] = "completed"
+        try:
+            notify_admin_food_delivered(req, donation or {}, db.get("users", []), db, save_db)
+        except Exception as e:
+            print(f"Admin deliver notif error: {e}")
     else:
         raise HTTPException(status_code=400, detail="Invalid action")
 
     save_db(db)
     return format_food_request(req)
+
+@app.get("/api/admin/notifications")
+def admin_get_notifications(admin: Dict[str, Any] = Depends(require_current_user)):
+    return list(reversed(db.get("email_notifications", [])))
 
 @app.get("/api/admin/backup-full.json")
 def admin_download_backup_json(admin: Dict[str, Any] = Depends(require_current_user)):

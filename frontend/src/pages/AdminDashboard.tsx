@@ -81,11 +81,17 @@ export default function AdminDashboard() {
     queryKey: ["admin-users"],
     queryFn: () => apiGet<User[]>("/admin/users"),
   });
+  const notificationsQuery = useQuery({
+    queryKey: ["admin-notifications"],
+    queryFn: () => apiGet<any[]>("/admin/notifications"),
+    refetchInterval: 5000,
+  });
 
   const stats = statsQuery.data;
   const requests = requestsQuery.data ?? [];
   const donations = donationsQuery.data ?? [];
   const users = usersQuery.data ?? [];
+  const notifications = notificationsQuery.data ?? [];
 
   const reviewMutation = useMutation({
     mutationFn: ({ id, action }: { id: string; action: "approve" | "reject" }) =>
@@ -213,6 +219,9 @@ export default function AdminDashboard() {
           </TabsTrigger>
           <TabsTrigger value="volunteers" data-testid="admin-tab-volunteers">
             Volunteer activity
+          </TabsTrigger>
+          <TabsTrigger value="notifications" data-testid="admin-tab-notifications">
+            Automated Emails ({notifications.length})
           </TabsTrigger>
         </TabsList>
 
@@ -474,6 +483,77 @@ export default function AdminDashboard() {
               </CardContent>
             </Card>
           </div>
+        </TabsContent>
+
+        <TabsContent value="notifications" className="mt-4">
+          <Card size="sm" className="border-[#e2e8f0] bg-white">
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Event Trigger</TableHead>
+                    <TableHead>Recipients</TableHead>
+                    <TableHead>Subject</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead className="whitespace-nowrap">Timestamp</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {notifications.length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} className="py-8 text-center text-sm text-[#475569]">
+                        No automated emails dispatched yet. Post a surplus, accept a delivery, or complete a run to trigger notifications.
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    notifications.map((n: any) => (
+                      <TableRow key={n.id}>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={
+                              n.event_type === "donation_created"
+                                ? "border-emerald-200 bg-emerald-50 text-emerald-800 font-semibold"
+                                : n.event_type === "ngo_accepted"
+                                ? "border-sky-200 bg-sky-50 text-sky-800 font-semibold"
+                                : "border-amber-200 bg-amber-50 text-amber-800 font-semibold"
+                            }
+                          >
+                            {n.event_type === "donation_created"
+                              ? "🍲 Surplus -> NGOs"
+                              : n.event_type === "ngo_accepted"
+                              ? "🚴 Claimed -> Volunteers"
+                              : "✅ Delivered -> Admin"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="font-mono text-xs text-slate-700">
+                          {Array.isArray(n.to_emails) ? n.to_emails.join(", ") : n.to_emails}
+                        </TableCell>
+                        <TableCell className="font-medium text-slate-900 max-w-[280px] truncate" title={n.subject}>
+                          {n.subject}
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant="outline"
+                            className={
+                              n.status === "sent"
+                                ? "border-emerald-300 bg-emerald-100 text-emerald-900 font-bold"
+                                : "border-slate-300 bg-slate-100 text-slate-700 font-medium"
+                            }
+                          >
+                            {n.status === "sent" ? "Delivered" : "Logged / Ready"}
+                          </Badge>
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-xs text-stone-500">
+                          {fmtDateTime(n.created_at)}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
         </TabsContent>
       </Tabs>
     </div>
