@@ -5,15 +5,15 @@ echo       Starting Surplus to Share (FoodLink) Locally
 echo ========================================================
 echo.
 
-set ROOT_DIR=%~dp0
+cd /d "%~dp0"
 
 echo [1/2] Starting Backend Server (FastAPI on http://localhost:8001)...
-start "FoodLink Backend (Port 8001)" cmd /k "cd /d "%ROOT_DIR%backend" && python server.py"
+start "FoodLink Backend" cmd /k "cd backend && python server.py"
 
 timeout /t 2 /nobreak > nul
 
 echo [2/2] Starting Frontend App (Vite on http://localhost:3000)...
-start "FoodLink Frontend (Port 3000)" cmd /k "cd /d "%ROOT_DIR%frontend" && npm run dev"
+start "FoodLink Frontend" cmd /k "cd frontend && npm.cmd run dev"
 
 timeout /t 3 /nobreak > nul
 

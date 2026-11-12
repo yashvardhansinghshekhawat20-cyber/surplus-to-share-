@@ -5,7 +5,7 @@ echo       Setting up FoodLink on your computer
 echo ========================================================
 echo.
 
-set ROOT_DIR=%~dp0
+cd /d "%~dp0"
 
 echo [1/3] Checking prerequisites...
 where python >nul 2>nul
@@ -31,7 +31,7 @@ echo Python and Node.js detected successfully!
 echo.
 
 echo [2/3] Installing Backend Dependencies (FastAPI, Uvicorn, etc.)...
-cd /d "%ROOT_DIR%backend"
+cd backend
 pip install -r requirements.txt
 if %errorlevel% neq 0 (
     echo [NOTE] Retrying with --user flag...
@@ -40,8 +40,8 @@ if %errorlevel% neq 0 (
 
 echo.
 echo [3/3] Installing Frontend Dependencies...
-cd /d "%ROOT_DIR%frontend"
-call npm install
+cd ..\frontend
+call npm.cmd install
 
 echo.
 echo ========================================================
